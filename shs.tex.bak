@@ -14,17 +14,19 @@
 \maketitle
 
 \begin{abstract}
-Capability Based Security is a conceptual framework for designing
-decentralized access control systems, yet there is no widely
-implemented protocol for establishing secure two-way communication
-that also forms a capability system.
+Capability Based Security is a logical framework for designing
+access control systems, yet there is no widely implemented protocol
+for establishing
+secure two-way communication that also forms a capability system.
 We examine the ways various key exchange protocols fail to
 form capability systems, and then present a secure key
 exchange protocol designed with capability systems in mind.
 In this protocol, the server's public key forms an access capability.
 Using a preauthentication step, we authenticate the client before
 the server, but still accomplish mutual authentication within 4 passes.
-All long term keys are kept secret from any unauthenticated actors.
+Included is a discussion of how the overall framework of capability
+systems guides the design process and simplifies many of the decisions
+involved in making a key exchange system.
 
 \end{abstract}
 
@@ -56,7 +58,7 @@ demands a higher degree of privacy than is provided by other available
 protocols.
 
 We will describe various key exchange protocols and examine why they
-are not suitable for a capability system. We will discuss these
+are not suitable for a capabality system. We will discuss these
 protocols abstractly, giving sufficient details to demonstrate their
 cryptographic properties. In some cases, this means ignoring details
 required for their actual implementation, for example the handling of
@@ -70,13 +72,14 @@ to the bearer of a \emph{capability} (cap). Capability
 Based Security predates modern cryptography, but its concepts
 map cleanly to the decentralized access control systems
 enabled by cryptography. \footnote{
-  There are limitations to a cryptographic capability system.
-  It is possible to implement what \emph{Capability Myths Demolished}\cite{capmyths}
-  describes as the \emph{Capabilities as Keys} model. In this model,
-  actors may delegate via any channel they can write to.
-  Contrast this with the \emph{Object Capability} model, which incorporates
-  a strict type system that can distinguish between data and capabilities,
-  and thus prevent capabilities from being mistakenly written as data.
+There are limitations to a cryptographic capability system.
+It is possible to implement what \emph{Capability Myths Demolished}\cite{capmyths}
+describes as the \emph{Capabilities as Keys} model. In this model,
+the user cannot be prevented from performing a delegations through any
+channel they can write data to.
+Contrast this with the \emph{Object Capability} model, which incorporates
+a strict type system that can distinguish between data and capabilities,
+and thus prevent capabilities from being written as data.
 }
 
 For example, possessing the key to decrypt a file means you have
@@ -99,18 +102,18 @@ particular access right except through delegation.
 to park your car, that is delegation. If you leave your keys in your
 car and it is stolen--that is an \emph{unintended delegation},
 or a \emph{misdelegation}. It is not the same as if someone forcibly
-gained entry to your car and hot-wired it. If someone ``steals'' your
+gained entry to your car and hotwired it. If someone ``steals'' your
 car because you mistakenly gave them the keys, it is your own fault.
 It is our responsibility as protocol designers to not build
 misdelegations into the protocol itself.\footnote{
-  AES is an example of a protocol that has been shown to contain a
-  misdelegation\cite{aestiming}  (secure AES implementations are possible,
-  but suffer from poor performance).
-  A good protocol design  cannot prevent a malicious implementer,
-  but it can  mitigate the effects of
-  an incompetent one. Thus, a good protocol design at least prevents
-  a malicious implementer from \emph{feigning incompetence}\cite{underhanded}.
-  Thankfully, maliciousness is not as common as incompetence.
+AES is an example of a protocol that has been shown to contain a
+misdelegation\cite{aestiming}  (secure AES implementations are possible,
+but suffer from poor performance).
+A good protocol design  cannot prevent a malicious implementer,
+but it can  mitigate the effects of
+an incompetent one. Thus, a good protocol design at least prevents
+a malicious implementer from \emph{fiening incompetence}\cite{underhanded}.
+Thankfully, maliciousness is far less common than incompetence.
 } If a system has unintended delegations at the protocol level,
 it is not a well behaved capability system.
 
@@ -118,7 +121,7 @@ it is not a well behaved capability system.
 that can be played as any other card. A token is called a \emph{wildcard}
 if it enables a set of rights that should have to be delegated
 individually.
-I know of no cryptosystem that was intentionally designed to contain
+I know of no cryptosystem that is designed intentionally to contain
 wildcards. Presence of an unintended wildcard in a capability
 system should be considered a design failure.
 
@@ -158,41 +161,31 @@ and if invalid the handshake is aborted.
 
 \subsection{Authenticated Key Exchange - STS, TLS, SSH}
 
-Station to Station\cite{aake} is simple, and is the basis of several
-popular protocols\footnote{
-  TLS (when used with ciphersuites that contain DHE or ECDHE),
-  and SSH share their basic design with STS, but using
-  a hmac to prove they know $a\cdot b$ instead of encryption.
-}.
+Here I will describe the Station To Station (STS) protocol\cite{aake}.
+This design forms the basis of most popular protocols (TLS, SSH)
+except without encrypting the keys or signatures (remember that $Box$
+is authenticated so $Box_k(msg)$ can be replaced with $mac_k(msg)$,
+and it will still constitute a proof of possession of the secret $k$.)
 
-\begin{samepage}
 \begin{proto}[Station to Station]
 
   $$
   \begin{align*}
+  \\
       ? \to \;?\;   &: a_p \\
       ? \gets B &: b_p, Box_{[a\cdot b]}(B_p | Sign_B(a_p|b_p)) \\
       A \to B   &: Box_{[a\cdot b]}(A_p | Sign_A(a_p | b_p)) \\
       A \gets B &: Box_{[a\cdot b]}(okay) \\
+  \\
   \end{align*}
   $$
 
   Alice sends a fresh ephemeral key to Bob, who creates one too,
   signs both keys and sends them back with his public key.
   Alice then boxes her public key and a signature to prove her identity.
-  Finally, Bob boxes a standard message to show his acceptance\footnote{
-    Often the description of a handshake protocol ends as soon
-    as each party is authenticated, but before the client \emph{knows}
-    it is authenticated. If this is the case, the client  could receive
-    an authentication error (or dropped connection) at the application
-    layer, which is awkward. Thus, they do not know they've been accepted
-    until receiving the first encrypted message. For this reason
-    I've presented STS as a 4 pass protocol, even though the original
-    paper describes it as a 3 pass protocol.
-  }.
+  Finally, Bob boxes a standard message to show his acceptance.
 
 \end{proto}
-\end{samepage}
 
 Neither party can be assured of the freshness of a message
 unless it is a cryptographic reply to a known fresh value,
@@ -206,6 +199,14 @@ To resist an identity misbinding attack we require proof that the
 other party possesses the shared secret $a\cdot b$. Authenticated encryption,
 $Box_{[a\cdot b]}$, or a mac accomplishes that \cite[section 3.1]{sigma}
 
+Often the description of a handshake protocol ends as soon
+as each party is authenticated, but before the client \empf{knows}
+it is authenticated. If this is the case, the client  could receive
+an authentication error (or dropped connection) at the application
+layer, which is awkward. Thus, they do not know they've been accepted
+until receiving the first encrypted message. For this reason
+I've presented STS as a 4 pass protocol, even though the original
+paper describes it as a 3 pass protocol.
 
 Is STS suitable for a capability system? No. The first thing STS
 does is authenticate the server, but the first question a capability
@@ -216,28 +217,9 @@ Bob \emph{anyway}, it makes an excellent candidate for an access cap.
 However, by authenticating Bob first, and sending his public key to
 an unauthenticated client, the public keys are delegated to anyone
 who initiates the protocol with Bob. Because of this unnecessary
-delegation, STS is not very useful as a capability system\footnote{
-  Readers familiar with SSH will know the typical workflow for setting
-  up a new server and accessing it for the first time. A server is
-  created (on a cloud service such as AWS), with the user's public
-  key in the \texttt{authorized\_keys} file. The user connects with the
-  ssh command, and since this is the first connection, they will be
-  prompted to accept the server's \emph{key fingerprint}.
-  Most users will just hit \texttt{Y}, since that is easier than
-  checking. This allows a window for a man-in-the-middle attack,
-  rendering ssh effectively a \emph{trust on first use} system.
-  On the other hand, if SSH was a capability system, the user would
-  need to copy/paste the cap, completely avoiding this weakness.
-  The user is likely to copy/past the ip address anyway, so if the
-  address and key where combined into one token it would be no more
-  awkward.
-  SSH requires an inconvenient security discipline, only
-  followed by the most paranoid users, but a capability system
-  would provide naturally better security at the same level of
-  convenience.
-}.
+delegation, STS is not very useful as a capability system.
 
-\subsection{Encrypted Key Exchange - CurveCP}
+\subsection{Encrypted Authenticated Key Exchange - CurveCP}
 
 CurveCP\cite{curvecp} implements authentication relying only on
 nacl's\cite{nacl} $Box$ primitive, which uses curve25519 keys.
@@ -251,22 +233,23 @@ from eavesdroppers.
 
   $$
   \begin{align*}
-      ? \to B   &: a_p, Box_{[a\cdot B]}(okay) \\
+  \\
+      ? \to \;?\;   &: a_p, Box_{[a\cdot B]}(okay) \\
       ? \gets B &: Box_{[a\cdot B]}(b_p) \\
       A \to B   &: Box_{[a\cdot b]}(A_p||Box_{[A \cdot B]}(a_p))\\
       A \gets B &: Box_{[a\cdot b]}(okay) \\
+  \\
   \end{align*}
   $$
 
-  Alice boxes an ephemeral key, $a_p$ and a standard message to Bob.
+  Alice boxes an ephemeral key, $a_p$ and a standard message to Bob,
+  Because it may be a replay It's marked as $? \to \;?$.
   Bob boxes his ephemeral key back to Alice's ephemeral key.
   This convinces Alice of Bob's identity, a man in the middle fails
   at this point. Alice boxes (to $[a\cdot b]$) her long term key, $A_p$,
   with another box (to $[A\cdot B]$) containing her ephemeral key.
-  If Bob is satisfied with this he responds with a standard message,
-  boxed to the ephemeral keys\footnote{
-    Again, actually a 4 pass protocol.
-  }.
+  If Bob is satisified with this he responds with a standard message,
+  boxed to the ephemeral keys.
 
 \end{proto}
 
@@ -292,18 +275,18 @@ to access Bob. Unfortunately, this protocol has two problems.
     enables Key Compromise Impersonation (KCI) by someone who
     knows $B_{secret}$ \cite{ccp_review}. If Conrad gains
     $B_{secret}$ he can impersonate \emph{anyone} to Bob.
-    To impersonate Alice, Conrad would connect to Bob,
+    To impersonate Alice, Condrad would connect to Bob,
     create an ephemeral key $a$, box it to Bob, and when Bob responds,
     create $Box_{[a\cdot b]}(A_p||Box_{[A \cdot B]}(a_p))$,
     except using $(A_{public}, B_{secret})$,
     as Bob would when opening the box, not $(A_{secret}, B_{public})$ as
     Alice would when sealing it. If Conrad possesses $B_{secret}$ he can
-    impersonate arbitrary keys to Bob. Thus, $B_{secret}$ is a wildcard
+    impersonate arbitary keys to Bob. Thus, $B_{secret}$ is a wildcard
     capability, and CurveCP is not a well behaved capability system.
 
 \end{enumerate}
 
-\subsection{Deniable Key Exchange - OTR, Noise, TextSecure}
+\subsection{Deniable Authenticated Key Exchange - OTR, Noise, TextSecure}
 
 There is a class of key exchange protocols which make deniability
 a design goal\cite{otr, textsecure, noise}. The argument for this
@@ -314,7 +297,7 @@ These protocols are unsuitable for a capability system for the same
 reason as STS---An unauthenticated client learns the server key in
 the second pass. This would be simple to fix, so whether a deniable
 key exchange can be a well behaved capability system deserves closer study.
-TextSecure\cite{textsecure} supersedes OTR\cite{otr}, but
+TextSecure\cite{textsecure} supercedes OTR\cite{otr}, but
 uses a 3rd party introducer and is thus not directly analogous to
 a key exchange, so we will examine the noise\cite{noise} protocol
 instead.
@@ -329,21 +312,21 @@ key.
 
   $$
   \begin{align*}
+  \\
       ? \to \;?\; &: a_p \\
       ? \gets B &: b_p, Box_{[a\cdot b]}(B_p), Box_{[a\cdot b|a\cdot B]}(okay) \\
       A \to B &: Box_{[a\cdot b]}(A_p), Box_{[a\cdot b|A\cdot b]}(okay) \\
       A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(a_p|b_p)\\
+  \\
   \end{align*}
   $$
 
   Alice sends Bob her ephemeral key. Bob replies with his ephemeral key,
-  a box containing his long term key, and a multi-keyed box as
+  a box containing his long term key, and a multikeyed box as
   evidence he is Bob. Alice replies with
-  a multi-key box as evidence she knows $a_{secret}$ and $A_{secret}$.
+  a multikey box as evidence she knows $a_{secret}$ and $A_{secret}$.
   Bob then sends back a boxed message showing he was also able
-  to derive that shared secret\footnote{
-    like STS, it's really a 4 pass protocol
-  }
+  to derive that shared secret (like STS, it's really a 4 pass protocol)
 
 \end{proto}
 
@@ -366,7 +349,7 @@ hopefully more difficult to gain)
   so $B_p$ is not useful as a capability.
 
   \item KCI is still possible, but harder -- To impersonate an
-  arbitrary key to Bob you have to know Bob's ephemeral \emph{and} long
+  arbitary key to Bob you have to know Bob's ephemeral \emph{and} long
   term secret keys. This would be possible for anyone who had
   passive read access to Bob's memory -- at first
   glance this may seem like a unlikely proposition, but in fact
@@ -402,14 +385,16 @@ To ``preauthenticate'', Alice sends a proof of both her identity,
 and her intention to connect to Bob. Preauthentication can be
 implemented with both encryption and signatures.
 
-\begin{proto}[Deniable Capability Handshake]
+\begin{proto}[Denyable Capability Handshake, flawed]
 
   $$
   \begin{align*}
+  \\
       ? \to \;?\; &: a_p  \\
       ? \gets \;?\; &: b_p \\
       A \to B &: Box_{[a \cdot b | a \cdot B]}(A_p) \\
       A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(okay)\\
+  \\
   \end{align*}
   $$
 
@@ -422,7 +407,7 @@ implemented with both encryption and signatures.
 
 Requiring Alice to authenticate first is unusual, but
 I think this is a fair deal. Bob has already put himself
-at a disadvantage by allowing himself to be publicly
+at a disadvantage by allowing himself to be publically
 addressable. It's only fair that Alice authenticates first.
 By encrypting her authentication she need not reveal her
 identity to anyone but the one true Bob. Likewise, if Bob chooses
@@ -451,28 +436,28 @@ functions to convert signing to exchange keys,
 so an identity could be represented as a signing key,
 which would be converted to an exchange key when necessary.
 
-\begin{samepage}
 \begin{proto}[Capability-based Handshake]
 
   $$
   \begin{align*}
+  \\
       ? \to ? &: a_p   \\
       ? \gets ? &: b_p \\
       H &= A_{p}|Sig_A(B_p|hash(a \cdot b)) \\
       A \to B &: Box_{[a \cdot b | a \cdot B]}(H)\\
       A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(Sig_B(H) )\\
+  \\
   \end{align*}
   $$
 
   Alice and Bob exchange ephemeral keys, then Alice
   preauthenticates privately to Bob. Bob demonstrates his acceptance
   by privately signing her preauthentication.
-  Note, that $a_{secret}$ and $b_{secret}$ are capabilities to decrypt
+  Note, that $a_{secret}$ and $b_{secret}$ are capabilites to decrypt
   the handshake, but since they are not wildcards we still have a well
   behaved capability system.
 
 \end{proto}
-\end{samepage}
 
 The design is getting much better. We resist eavesdropping, replay,
 man-in-the-middle, KCI attacks, and provide forward secrecy.
@@ -490,53 +475,51 @@ built on this protocol from interfering with each other.
 Most importantly, we must be careful to avoid creating a vulnerability
 to a Chosen Protocol Attack\cite{cpa}. If the signing keys are also used
 elsewhere, it's possible that a signature from this protocol could be
-reused, possibly creating an unintended delegation.
+reused elsewhere, possibly creating an unintended delegation.
 All of these issues can be addressed via an application key ($K$)
 which forms a capability to the protocol. The ephemeral keys can be
 authenticated by using the $K$ as the key to an $hmac$. By including
 $K$ in each signature it is demonstrated that the signature belongs
 within this protocol, mitigating CPA. It is vital that if there are any
 other cases where a signing key is used, then a similar level of care is
-taken to ensure unambiguous interpretation of signatures.
+taken to ensure unambigious interpretation of signatures.
 
-$K$ is a capability to access \emph{an instance of this protocol}\footnote{
-  i.e. an application which is built on it.
-  $K$ should be updated if the implementation of the application changes
-  incompatibly. If backwards compatibility is required, the new protocol
-  version could be used on a new port, until the legacy version is fully
-  deprecated. For an openly specified application $K$ may be publicly
-  known. For a private application it may be a closely guarded secret.
-}
-An eavesdropper cannot extract $K$ from the cipher-text, but it can
+$K$ is a capability to access all actors that speak this protocol
+(or an application built on it). It should be updated if the
+implementation of the application or protocol changes incompatibly.
+If backwards compatibility is required, the new protocol version could
+be used on a new port, until the legacy version is fully deprecated.
+For an openly specified application $K$ may be publicly known.
+For a private application it may be a closely guarded secret.
+An eavesdropper cannot extract $K$ from the ciphertext, but it can
 confirm a correct guess at $K$. In the case where $K$ is widely known,
-and an attacker that knows $K$ tampers with an initial pass but creates
-avalid $hmac_K$, their interference will still be detected when the
-third pass is received.
+and an attacker tampers with an initial pass but creates a valid hmac,
+their interference will still be detected once the third pass is received.
 
-\begin{samepage}
 \begin{proto}[Secret Handshake]
 
   $$
   \begin{align*}
+  \\
       ? \to \;?\;   &: a_p, hmac_{K}(a_p)   \\
       ? \gets \;?\; &: b_p, hmac_{[K|a\cdot b]}(b_p) \\
       H&=A_{p}|sign_A(K|B_p|hash(a\cdot b)) \\
       A \to B       &: box_{[K|a \cdot b | a \cdot B]}(H)\\
       A \gets B     &:
         box_{[K|a \cdot b | a \cdot B | A \cdot b]}(sign_B(K|H|hash(a\cdot b)) )\\
+  \\
   \end{align*}
   $$
 
-  The same as the previous, but the shared key starts
+  The same as the previous, but at each pass, the shared key starts
   as $K$, and is extended as more public keys are learned.
   Alice's authentication, $A_{p}|sign_A(K|B_p|hash(a\cdot b))$,
   proves that she possesses $A$, and that the proof is for this protocol
   (via $K$) and this handshake (via $hash(a\cdot b)$).
-  In case Bob does not yet have Alice's key, we delegate it to him
+  Incase Bob does not yet have Alice's key, we delegate it to him
   (obviously we want Bob to have that capability, or Alice would not have
   contacted him).
 \end{proto}
-\end{samepage}
 
 For Bob to authenticate back to Alice, he could just sign the proof
 Alice sent him, and send it back. $H$ is already cryptographically
