@@ -18,8 +18,8 @@ Capability Based Security is a conceptual framework for designing
 decentralized access control systems, yet there is no widely
 implemented protocol for establishing secure two-way communication
 that also forms a capability system.
-We examine the ways various key exchange protocols fail to
-form capability systems, and then present a secure key
+We examine the ways various key exchange protocols arn't
+capability systems, and then present a secure key
 exchange protocol designed with capability systems in mind.
 In this protocol, the server's public key forms an access capability.
 Using a preauthentication step, we authenticate the client before
@@ -55,8 +55,8 @@ the needs of a capability system. Interestingly, a capability system
 demands a higher degree of privacy than is provided by other available
 protocols.
 
-We will describe various key exchange protocols and examine why they
-are not suitable for a capability system. We will discuss these
+We will describe various key exchange protocols and examine why their
+design does not form a capability system. We will discuss these
 protocols abstractly, giving sufficient details to demonstrate their
 cryptographic properties. In some cases, this means ignoring details
 required for their actual implementation, for example the handling of
@@ -142,7 +142,9 @@ are exchanged.
 
 When a key pair is an argument to a function,
 it's represented as a subscript. When a key is sent in a message,
-only the public key is used, to be explicit I write that as $A_p$.
+only the public key is used, to be explicit I write that as $A_{p}$.
+None of the protocols studied in this paper ever send a secret key
+over the wire.
 
 Long term keys for Alice and Bob are represented by $A,B$,
 and ephemeral keys are $a,b$. $a \cdot b$ denotes a shared key derived
@@ -170,9 +172,9 @@ popular protocols\footnote{
 
   $$
   \begin{align*}
-      ? \to \;?\;   &: a_p \\
-      ? \gets B &: b_p, Box_{[a\cdot b]}(B_p | Sign_B(a_p|b_p)) \\
-      A \to B   &: Box_{[a\cdot b]}(A_p | Sign_A(a_p | b_p)) \\
+      ? \to \;?\;   &: a_{p} \\
+      ? \gets B &: b_{p}, Box_{[a\cdot b]}(B_p | Sign_B(a_{p}|b_{p})) \\
+      A \to B   &: Box_{[a\cdot b]}(A_{pub} | Sign_A(a_{p} | b_{p})) \\
       A \gets B &: Box_{[a\cdot b]}(okay) \\
   \end{align*}
   $$
@@ -228,7 +230,7 @@ delegation, STS is not very useful as a capability system\footnote{
   rendering ssh effectively a \emph{trust on first use} system.
   On the other hand, if SSH was a capability system, the user would
   need to copy/paste the cap, completely avoiding this weakness.
-  The user is likely to copy/past the ip address anyway, so if the
+  The user is likely to copy/paste the IP address anyway, so if the
   address and key where combined into one token it would be no more
   awkward.
   SSH requires an inconvenient security discipline, only
@@ -251,14 +253,14 @@ from eavesdroppers.
 
   $$
   \begin{align*}
-      ? \to B   &: a_p, Box_{[a\cdot B]}(okay) \\
-      ? \gets B &: Box_{[a\cdot B]}(b_p) \\
-      A \to B   &: Box_{[a\cdot b]}(A_p||Box_{[A \cdot B]}(a_p))\\
+      ? \to B   &: a_{p}, Box_{[a\cdot B]}(okay) \\
+      ? \gets B &: Box_{[a\cdot B]}(b_{p}) \\
+      A \to B   &: Box_{[a\cdot b]}(A_p||Box_{[A \cdot B]}(a_{p}))\\
       A \gets B &: Box_{[a\cdot b]}(okay) \\
   \end{align*}
   $$
 
-  Alice boxes an ephemeral key, $a_p$ and a standard message to Bob.
+  Alice sends her ephemeral key, $a_p$, and a boxed standard message to Bob.
   Bob boxes his ephemeral key back to Alice's ephemeral key.
   This convinces Alice of Bob's identity, a man in the middle fails
   at this point. Alice boxes (to $[a\cdot b]$) her long term key, $A_p$,
@@ -276,14 +278,15 @@ to access Bob. Unfortunately, this protocol has two problems.
 \begin{enumerate}
   \item If Bob moves to a different address, a replay attack can
     confirm where, without knowing his public key.
-    Since the first packet is encrypted only Bob will be able to respond,
-    so a response suggests it \emph{is}.
+    Since the first pass is encrypted only Bob will be able to respond,
+    if it is replayed to a new server and that server responds,
+    it  suggests that server is Bob.
     Having this information could encourage the replay attacker
     to look for other security weaknesses.
 
   \item Worse,
-    step 3 fails to includes a fresh value from both sides of the
-    exchange. Thus $(a, Box_{[A \cdot B]}(a_p))$ forms a reusable capability
+    step 3 fails to include a fresh value from both sides of the
+    exchange. Thus $(a, Box_{[A \cdot B]}(a_{p}))$ forms a reusable capability
     to authenticate to Bob as Alice\cite{ccp_review}. See also
     \cite{aake}[section 5.1, signing only one's own exponential].
 
@@ -294,7 +297,7 @@ to access Bob. Unfortunately, this protocol has two problems.
     $B_{secret}$ he can impersonate \emph{anyone} to Bob.
     To impersonate Alice, Conrad would connect to Bob,
     create an ephemeral key $a$, box it to Bob, and when Bob responds,
-    create $Box_{[a\cdot b]}(A_p||Box_{[A \cdot B]}(a_p))$,
+    create $Box_{[a\cdot b]}(A_p||Box_{[A \cdot B]}(a_{p}))$,
     except using $(A_{public}, B_{secret})$,
     as Bob would when opening the box, not $(A_{secret}, B_{public})$ as
     Alice would when sealing it. If Conrad possesses $B_{secret}$ he can
@@ -329,10 +332,10 @@ key.
 
   $$
   \begin{align*}
-      ? \to \;?\; &: a_p \\
-      ? \gets B &: b_p, Box_{[a\cdot b]}(B_p), Box_{[a\cdot b|a\cdot B]}(okay) \\
-      A \to B &: Box_{[a\cdot b]}(A_p), Box_{[a\cdot b|A\cdot b]}(okay) \\
-      A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(a_p|b_p)\\
+      ? \to \;?\; &: a_{p} \\
+      ? \gets B &: b_{p}, Box_{[a\cdot b]}(B_{p}), Box_{[a\cdot b|a\cdot B]}(okay) \\
+      A \to B &: Box_{[a\cdot b]}(A_{p}), Box_{[a\cdot b|A\cdot b]}(okay) \\
+      A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(a_{p}|b_{p})\\
   \end{align*}
   $$
 
@@ -372,7 +375,7 @@ hopefully more difficult to gain)
   glance this may seem like a unlikely proposition, but in fact
   if Bob is running on a rented virtual machine that
   is precisely the situation he would be in.
-  In a well behaved system, knowing Bob's private key \emph{should}
+  In a well behaved system, knowing Bob's secret key \emph{should}
   give you the ability to authenticate \emph{as Bob}, but not as Alice.
 \end{enumerate}
 
@@ -406,9 +409,9 @@ implemented with both encryption and signatures.
 
   $$
   \begin{align*}
-      ? \to \;?\; &: a_p  \\
-      ? \gets \;?\; &: b_p \\
-      A \to B &: Box_{[a \cdot b | a \cdot B]}(A_p) \\
+      ? \to \;?\; &: a_{p}  \\
+      ? \gets \;?\; &: b_{p} \\
+      A \to B &: Box_{[a \cdot b | a \cdot B]}(A_{p}) \\
       A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(okay)\\
   \end{align*}
   $$
@@ -435,7 +438,7 @@ If Bob is unconcerned with the identity of his clients,
 he may allow anyone knowing $B_p$ to authenticate. A client can
 remain anonymous by using a second ephemeral identity.
 
-In this design Bob's public key forms as a capability,
+In this design Bob's public key is a capability,
 but it still has the wildcard (KCI) problem that
 noise and TextSecure have.
 
@@ -456,9 +459,9 @@ which would be converted to an exchange key when necessary.
 
   $$
   \begin{align*}
-      ? \to ? &: a_p   \\
-      ? \gets ? &: b_p \\
-      H &= A_{p}|Sig_A(B_p|hash(a \cdot b)) \\
+      ? \to ? &: a_{p}   \\
+      ? \gets ? &: b_{p} \\
+      H &= A_{p}|Sig_A(B_{p}|hash(a \cdot b)) \\
       A \to B &: Box_{[a \cdot b | a \cdot B]}(H)\\
       A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(Sig_B(H) )\\
   \end{align*}
@@ -477,11 +480,10 @@ which would be converted to an exchange key when necessary.
 The design is getting much better. We resist eavesdropping, replay,
 man-in-the-middle, KCI attacks, and provide forward secrecy.
 There are no wildcards, nor unintended delegations.
-But there remain a few minor niggles to tidy up.
+But there are still a few small issues to clear up.
 
-It is often helpful to have a protocol id and version associated
-with a handshake. Currently, we have no way to know if Alice and
-Bob are not speaking exactly the same protocol.
+Implementations change, and so it is often helpful to have a protocol
+id and version associated with a handshake.
 Also, if either of the two initial passes are tampered with, it would
 be undetected until the first authenticated pass is received.
 It might also be nice to prevent different applications
@@ -492,7 +494,7 @@ to a Chosen Protocol Attack\cite{cpa}. If the signing keys are also used
 elsewhere, it's possible that a signature from this protocol could be
 reused, possibly creating an unintended delegation.
 All of these issues can be addressed via an application key ($K$)
-which forms a capability to the protocol. The ephemeral keys can be
+which is a capability to the protocol. The ephemeral keys can be
 authenticated by using the $K$ as the key to an $hmac$. By including
 $K$ in each signature it is demonstrated that the signature belongs
 within this protocol, mitigating CPA. It is vital that if there are any
@@ -518,9 +520,9 @@ third pass is received.
 
   $$
   \begin{align*}
-      ? \to \;?\;   &: a_p, hmac_{K}(a_p)   \\
-      ? \gets \;?\; &: b_p, hmac_{[K|a\cdot b]}(b_p) \\
-      H&=A_{p}|sign_A(K|B_p|hash(a\cdot b)) \\
+      ? \to \;?\;   &: a_{p}, hmac_{K}(a_{p})   \\
+      ? \gets \;?\; &: b_{p}, hmac_{[K|a\cdot b]}(b_{p}) \\
+      H&=A_{p}|sign_A(K|B_{p}|hash(a\cdot b)) \\
       A \to B       &: box_{[K|a \cdot b | a \cdot B]}(H)\\
       A \gets B     &:
         box_{[K|a \cdot b | a \cdot B | A \cdot b]}(sign_B(K|H|hash(a\cdot b)) )\\
@@ -569,18 +571,24 @@ I have described a highly private 4 pass handshake protocol
 that is suitable for capability systems. It does not suffer
 from replay, eavesdropping, man in the middle,
 or key compromise impersonation.
-Capability Systems provide a conceptual framework for security
-based not on distributing access, but by restricting it.
-In a cryptographic capability system like this one, public and
+Capability Systems provide a conceptual framework for both
+distributing and restricting access, thus it is a helpful
+guide when justifying decisions.
+In cryptographic capability systems like this protocol, public and
 private keys are simply \emph{access rights}. This allows us to
 think otherwise unthinkable thoughts, such as the notion of a
 \emph{secret public key} or a \emph{shared private key}.
-With concepts like these, we could create dynamic
+With concepts like these, we can create dynamic
 layers of access and restrictions. Since \emph{Secret Handshake} is
 otherwise unopinionated, and secure two-way communication is fundamental,
 if it was combined with a suitable streaming bulk encryption protocol,
-it could form a powerful building block for decentralized access
+it could be a powerful building block for decentralized access
 control systems.
+
+\section*{Acknowledgements}
+
+I would like to thank Tristan Slominski, Paul Frazee, and James Haliday
+for reading drafts of this paper and useful comments.
 
 \bibliographystyle{plain}
 
