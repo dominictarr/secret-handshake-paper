@@ -291,9 +291,11 @@ to access Bob. Unfortunately, this protocol has two problems.
     \cite{aake}[section 5.1, signing only one's own exponential].
 
   \item Worst, CurveCP contains a wildcard capability.
-    By using curve25519 key sharing for authentication, CurveCP
-    enables Key Compromise Impersonation (KCI) by someone who
-    knows $B_{secret}$ \cite{ccp_review}. If Conrad gains
+    Because a curve25519 key is used for authentication,
+    an actor who knows $B_{secret}$ \cite{ccp_review} can
+    impersonate \emph{anyone} to Bob--In the literature
+    this is called a Key Compromise Impersonation (KCI).
+    If Conrad gains
     $B_{secret}$ he can impersonate \emph{anyone} to Bob.
     To impersonate Alice, Conrad would connect to Bob,
     create an ephemeral key $a$, box it to Bob, and when Bob responds,
@@ -368,7 +370,7 @@ hopefully more difficult to gain)
   anyone who connects to the server will be sent the public key,
   so $B_p$ is not useful as a capability.
 
-  \item KCI is still possible, but harder -- To impersonate an
+  \item Key Compromise Impersonation is still possible, but harder -- To impersonate an
   arbitrary key to Bob you have to know Bob's ephemeral \emph{and} long
   term secret keys. This would be possible for anyone who had
   passive read access to Bob's memory -- at first
