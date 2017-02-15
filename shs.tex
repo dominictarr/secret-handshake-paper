@@ -525,9 +525,9 @@ third pass is received.
       ? \to \;?\;   &: a_{p}, hmac_{K}(a_{p})   \\
       ? \gets \;?\; &: b_{p}, hmac_{[K|a\cdot b]}(b_{p}) \\
       H&=A_{p}|Sign_A(K|B_{p}|hash(a\cdot b)) \\
-      A \to B       &: box_{[K|a \cdot b | a \cdot B]}(H)\\
+      A \to B       &: Box_{[K|a \cdot b | a \cdot B]}(H)\\
       A \gets B     &:
-        box_{[K|a \cdot b | a \cdot B | A \cdot b]}(Sign_B(K|H|hash(a\cdot b)) )\\
+        Box_{[K|a \cdot b | a \cdot B | A \cdot b]}(Sign_B(K|H|hash(a\cdot b)) )\\
   \end{align*}
   $$
 
