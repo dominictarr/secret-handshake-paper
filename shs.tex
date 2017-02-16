@@ -18,7 +18,7 @@ Capability Based Security is a conceptual framework for designing
 decentralized access control systems, yet there is no widely
 implemented protocol for establishing secure two-way communication
 that also forms a capability system.
-We examine the ways various key exchange protocols arn't
+We examine the ways various key exchange protocols aren't
 capability systems, and then present a secure key
 exchange protocol designed with capability systems in mind.
 In this protocol, the server's public key forms an access capability.
@@ -49,7 +49,7 @@ with security properties that are easy to understand and use safely
 key exchange - a secret handshake. Since a key exchange can be designed
 with so many possible properties, we adopt the framework of capability
 systems\cite{unicap} and allow that to drive the design.
-TahoeLAFS\cite{tahoe} is the inspiration for this decision.
+Tahoe-LAFS\cite{tahoe} is the inspiration for this decision.
 We find that no currently available handshake protocol adequately meets
 the needs of a capability system. Interestingly, a capability system
 demands a higher degree of privacy than is provided by other available
@@ -199,7 +199,7 @@ popular protocols\footnote{
 Neither party can be assured of the freshness of a message
 unless it is a cryptographic reply to a known fresh value,
 i.e. a value they freshly created. Hence, it is pointless for Alice
-to send her identity in the first pass. Bob cannot be sure it truly her
+to send her identity in the first pass. Bob cannot be sure it is truly her
 until the third pass at the earliest.
 
 However, Alice can know Bob's first message is fresh, so STS and many
@@ -273,7 +273,7 @@ from eavesdroppers.
 \end{proto}
 
 In CurveCP knowing Bob's public key functions as a capability
-to access Bob. Unfortunately, this protocol has two problems.
+to access Bob. Unfortunately, this protocol has some problems.
 
 \begin{enumerate}
   \item If Bob moves to a different address, a replay attack can
@@ -463,9 +463,9 @@ which would be converted to an exchange key when necessary.
   \begin{align*}
       ? \to ? &: a_{p}   \\
       ? \gets ? &: b_{p} \\
-      H &= A_{p}|Sig_A(B_{p}|hash(a \cdot b)) \\
+      H &= A_{p}|Sign_A(B_{p}|hash(a \cdot b)) \\
       A \to B &: Box_{[a \cdot b | a \cdot B]}(H)\\
-      A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(Sig_B(H) )\\
+      A \gets B &: Box_{[a \cdot b | a \cdot B | A \cdot b]}(Sign_B(H) )\\
   \end{align*}
   $$
 
@@ -524,10 +524,10 @@ third pass is received.
   \begin{align*}
       ? \to \;?\;   &: a_{p}, hmac_{K}(a_{p})   \\
       ? \gets \;?\; &: b_{p}, hmac_{[K|a\cdot b]}(b_{p}) \\
-      H&=A_{p}|sign_A(K|B_{p}|hash(a\cdot b)) \\
-      A \to B       &: box_{[K|a \cdot b | a \cdot B]}(H)\\
+      H&=A_{p}|Sign_A(K|B_{p}|hash(a\cdot b)) \\
+      A \to B       &: Box_{[K|a \cdot b | a \cdot B]}(H)\\
       A \gets B     &:
-        box_{[K|a \cdot b | a \cdot B | A \cdot b]}(sign_B(K|H|hash(a\cdot b)) )\\
+        Box_{[K|a \cdot b | a \cdot B | A \cdot b]}(Sign_B(K|H|hash(a\cdot b)) )\\
   \end{align*}
   $$
 
