@@ -524,7 +524,7 @@ third pass is received.
   \begin{align*}
       ? \to \;?\;   &: a_{p}, hmac_{K}(a_{p})   \\
       ? \gets \;?\; &: b_{p}, hmac_{[K|a\cdot b]}(b_{p}) \\
-      H&=A_{p}|Sign_A(K|B_{p}|hash(a\cdot b)) \\
+      H&=Sign_A(K|B_{p}|hash(a\cdot b))|A_{p} \\
       A \to B       &: Box_{[K|a \cdot b | a \cdot B]}(H)\\
       A \gets B     &:
         Box_{[K|a \cdot b | a \cdot B | A \cdot b]}(Sign_B(K|H|hash(a\cdot b)) )\\
@@ -533,7 +533,7 @@ third pass is received.
 
   The same as the previous, but the shared key starts
   as $K$, and is extended as more public keys are learned.
-  Alice's authentication, $A_{p}|sign_A(K|B_p|hash(a\cdot b))$,
+  Alice's authentication, $Sign_A(K|B_p|hash(a\cdot b))|A_{p}$,
   proves that she possesses $A$, and that the proof is for this protocol
   (via $K$) and this handshake (via $hash(a\cdot b)$).
   In case Bob does not yet have Alice's key, we delegate it to him
